@@ -1,5 +1,6 @@
 import json
 
+from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.hashers import make_password
@@ -11,7 +12,7 @@ from django.shortcuts import render
 from django.views.generic import View
 
 from courses.models import Course
-from operation.models import UserCourse, UserFavorite
+from operation.models import UserCourse, UserFavorite, UserMessage
 from organization.models import CourseOrg, Teacher
 from users.forms import LoginForm, RegisterForm, ForgetForm, ModifyPwdForm, UploadImageFrom, UserInfoFrom
 from users.models import UserProfile, EmailVerifyRecord
@@ -62,6 +63,12 @@ class RegisterView(View):
             user_profile.password = make_password(pass_word)
             user_profile.is_active = False
             user_profile.save()
+
+            user_message = UserMessage()
+            user_message.user = user_profile.id
+            user_message.message = "欢迎注册慕学在线网"
+            user_message.save()
+
             send_register_email(user_name, 'register')
             return render(request, 'login.html')
         else:
@@ -276,4 +283,31 @@ class MyFavCourseView(LoginRequiredMixin, View):
         #     course_list.append(teacher)
         return render(request, 'usercenter-fav-course.html', {
             "course_list": course_list
+        })
+
+
+class MymessageView(LoginRequiredMixin, View):
+    """
+    我的消息
+    """
+    def get(self, request):
+        all_messages = UserMessage.objects.filter(user=request.user.id)
+
+        #用户进入个人消息后清空未读消息的记录
+        all_unread_messages = UserMessage.objects.filter(user=request.user.id, has_read=False)
+        for unread_message in all_unread_messages:
+            unread_message.has_read = True
+            unread_message.save()
+
+        #对个人消息进行分页
+        try:
+            page = request.GET.get('page', 1)
+        except PageNotAnInteger:
+            page = 1
+
+        p = Paginator(all_messages, 5, request=request)
+
+        messages = p.page(page)
+        return render(request, 'usercenter-message.html', {
+            "messages":messages
         })

@@ -20,7 +20,7 @@ from django.views.generic import TemplateView
 from django.views.static import serve
 
 import xadmin
-from MxOnline.settings import MEDIA_ROOT, STATIC_ROOT
+from MxOnline.settings import MEDIA_ROOT
 from organization.views import OrgView
 from users.views import LoginView, RegisterView, ActiveUserView, ForgetPwdView, ResetView, ModifyPwdView, LogoutView, IndexView
 
@@ -42,7 +42,8 @@ urlpatterns = [
     url(r'^users/', include('users.urls', namespace='users')),
 
     url(r'^media/(?P<path>.*)/$', serve, {'document_root': MEDIA_ROOT}),
-    url(r'^static/(?P<path>.*)/$', serve, {'document_root': STATIC_ROOT}),
+    # url(r'^static/(?P<path>.*)/$', serve, {'document_root': STATIC_ROOT}),
+    url(r'^ueditor/',include('DjangoUeditor.urls' )),
 ]
 
 # 全局404页面配置
